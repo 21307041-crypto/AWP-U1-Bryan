@@ -291,4 +291,5 @@ window.SW3Manager = {
     probar: probarCache
 };
 
+
 console.log('📦 SW3: Módulo JavaScript cargado - Listo para usar');
