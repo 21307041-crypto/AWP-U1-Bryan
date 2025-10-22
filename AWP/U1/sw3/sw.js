@@ -1,185 +1,87 @@
-// SW3 - Gestor Avanzado de Cache (Bryan Rocha Moreno - 21307041)
-const CACHE_ACTUAL = 'sw3-cache-v1';
-const ARCHIVOS_CACHE = [
+// sw.js - Service Worker básico - Bryan Rocha Moreno - 21307041
+const CACHE_NAME = 'sw3-cache-v1';
+const FILES_TO_CACHE = [
     './',
     './app.js',
-    './gestor-cache.js',
-    './estilos.css',
-    './recursos.json'
+    './icono.png'
 ];
 
-// Evento de instalación del Service Worker
-self.addEventListener('install', evento => {
-    console.log('🛠️ SW3: Iniciando instalación...');
+// Instalación del Service Worker
+self.addEventListener('install', function(event) {
+    console.log('Instalando Service Worker...');
     
-    // Tomar control inmediato de las páginas
-    self.skipWaiting();
-    
-    evento.waitUntil(
-        caches.open(CACHE_ACTUAL)
-        .then(cache => {
-            console.log('📦 SW3: Almacenando recursos en cache...');
-            return cache.addAll(ARCHIVOS_CACHE);
-        })
-        .then(() => {
-            console.log('✅ SW3: Todos los recursos fueron cacheados exitosamente');
-        })
-        .catch(error => {
-            console.error('❌ SW3: Error al cachear recursos:', error);
-        })
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(function(cache) {
+                console.log('Guardando archivos en cache');
+                return cache.addAll(FILES_TO_CACHE);
+            })
+            .then(function() {
+                console.log('Archivos guardados en cache');
+                return self.skipWaiting();
+            })
+            .catch(function(error) {
+                console.log('Error al guardar en cache:', error);
+            })
     );
 });
 
-// Evento de activación - Limpieza de caches antiguos
-self.addEventListener('activate', evento => {
-    console.log('⚡ SW3: Service Worker activado');
+// Activación del Service Worker
+self.addEventListener('activate', function(event) {
+    console.log('Service Worker activado');
     
-    evento.waitUntil(
-        caches.keys()
-        .then(nombresCache => {
+    event.waitUntil(
+        caches.keys().then(function(cacheNames) {
             return Promise.all(
-                nombresCache.map(nombreCache => {
-                    // Eliminar caches que no sean el actual
-                    if (nombreCache !== CACHE_ACTUAL) {
-                        console.log('🗑️ SW3: Eliminando cache antiguo:', nombreCache);
-                        return caches.delete(nombreCache);
+                cacheNames.map(function(cacheName) {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Eliminando cache viejo:', cacheName);
+                        return caches.delete(cacheName);
                     }
                 })
             );
-        })
-        .then(() => {
-            console.log('🎯 SW3: Ahora controla todas las pestañas');
+        }).then(function() {
             return self.clients.claim();
         })
     );
 });
 
-// Evento fetch - Intercepta todas las peticiones
-self.addEventListener('fetch', evento => {
-    const urlSolicitud = evento.request.url;
-    
-    console.log('🔍 SW3: Interceptando petición:', urlSolicitud);
-    
-    // Estrategia: Cache First con fallback a network
-    evento.respondWith(
-        caches.match(evento.request)
-            .then(respuestaCache => {
-                // Si existe en cache, devolverlo
-                if (respuestaCache) {
-                    console.log('💾 SW3: Sirviendo desde cache:', urlSolicitud);
-                    return respuestaCache;
+// Interceptar peticiones
+self.addEventListener('fetch', function(event) {
+    event.respondWith(
+        caches.match(event.request)
+            .then(function(response) {
+                // Si está en cache, devolverlo
+                if (response) {
+                    console.log('Sirviendo desde cache:', event.request.url);
+                    return response;
                 }
                 
-                // Si no está en cache, hacer fetch
-                console.log('🌐 SW3: Obteniendo desde network:', urlSolicitud);
-                return fetch(evento.request)
-                    .then(respuestaNetwork => {
-                        // Verificar que la respuesta sea válida
-                        if (!respuestaNetwork || respuestaNetwork.status !== 200) {
-                            return respuestaNetwork;
-                        }
-                        
-                        // Clonar respuesta para almacenar en cache
-                        const respuestaClonada = respuestaNetwork.clone();
-                        
-                        // Almacenar nueva respuesta en cache
-                        caches.open(CACHE_ACTUAL)
-                            .then(cache => {
-                                cache.put(evento.request, respuestaClonada);
-                                console.log('🆕 SW3: Nuevo recurso almacenado en cache:', urlSolicitud);
-                            });
-                        
-                        return respuestaNetwork;
-                    })
-                    .catch(error => {
-                        console.error('🚫 SW3: Error en fetch:', error);
-                        
-                        // Para solicitudes de página, podrías devolver una página offline personalizada
-                        if (evento.request.destination === 'document') {
-                            return caches.match('./')
-                                .then(respuestaIndex => {
-                                    return respuestaIndex || new Response(
-                                        '<h1>Modo Offline</h1><p>Esta funcionalidad requiere conexión a internet.</p>',
-                                        { headers: { 'Content-Type': 'text/html' } }
-                                    );
+                // Si no está en cache, hacer la petición normal
+                console.log('Haciendo petición a internet:', event.request.url);
+                return fetch(event.request)
+                    .then(function(networkResponse) {
+                        // Si la respuesta es válida, guardarla en cache
+                        if (networkResponse && networkResponse.status === 200) {
+                            var responseToCache = networkResponse.clone();
+                            caches.open(CACHE_NAME)
+                                .then(function(cache) {
+                                    cache.put(event.request, responseToCache);
+                                    console.log('Guardado en cache:', event.request.url);
                                 });
                         }
-                        
-                        return new Response('Recurso no disponible en modo offline', {
-                            status: 408,
-                            statusText: 'Offline'
-                        });
+                        return networkResponse;
+                    })
+                    .catch(function(error) {
+                        console.log('Error en la petición:', error);
+                        // Si es una página y hay error, mostrar la página offline
+                        if (event.request.destination === 'document') {
+                            return caches.match('./');
+                        }
+                        return new Response('No hay conexión a internet');
                     });
             })
     );
 });
 
-// Manejo de mensajes desde la aplicación
-self.addEventListener('message', evento => {
-    console.log('📨 SW3: Mensaje recibido:', evento.data);
-    
-    switch (evento.data.tipo) {
-        case 'ACTUALIZAR_CACHE':
-            actualizarCache();
-            break;
-        case 'LIMPIAR_CACHE':
-            limpiarCache();
-            break;
-        case 'OBTENER_ESTADO':
-            obtenerEstadoCache().then(estado => {
-                evento.ports[0].postMessage(estado);
-            });
-            break;
-    }
-});
-
-// Función para actualizar cache manualmente
-async function actualizarCache() {
-    try {
-        const cache = await caches.open(CACHE_ACTUAL);
-        await cache.addAll(ARCHIVOS_CACHE);
-        console.log('🔄 SW3: Cache actualizado manualmente');
-    } catch (error) {
-        console.error('❌ SW3: Error al actualizar cache:', error);
-    }
-}
-
-// Función para limpiar cache específico
-async function limpiarCache() {
-    try {
-        await caches.delete(CACHE_ACTUAL);
-        console.log('🧹 SW3: Cache limpiado exitosamente');
-    } catch (error) {
-        console.error('❌ SW3: Error al limpiar cache:', error);
-    }
-}
-
-// Función para obtener estado del cache
-async function obtenerEstadoCache() {
-    try {
-        const cache = await caches.open(CACHE_ACTUAL);
-        const keys = await cache.keys();
-        
-        return {
-            nombre: CACHE_ACTUAL,
-            cantidadRecursos: keys.length,
-            recursos: keys.map(key => key.url),
-            estado: 'ACTIVO'
-        };
-    } catch (error) {
-        return {
-            estado: 'ERROR',
-            error: error.message
-        };
-    }
-}
-
-// Manejo de sincronización en segundo plano
-self.addEventListener('sync', evento => {
-    if (evento.tag === 'actualizacion-fondo') {
-        console.log('🔄 SW3: Sincronización en segundo plano iniciada');
-        evento.waitUntil(actualizarCache());
-    }
-});
-
-console.log('🚀 SW3: Service Worker cargado y listo');
+console.log('Service Worker cargado');
