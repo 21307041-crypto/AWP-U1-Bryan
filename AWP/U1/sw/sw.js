@@ -33,7 +33,7 @@ self.addEventListener("activate", (event) => {
         //Caches.keys() obtiene todos los nombres de caches almacenados
         caches.keys().then((cacheNames) => 
             //Promises.all() espera a que se eliminen todos los caches viejos
-            Promise.all(
+            promise.all(
                 cacheNames.map((cache) => {
                     //si el cache no coincide con el actual se elimina
                     if (cache !== CACHE_NAME) {
@@ -44,4 +44,5 @@ self.addEventListener("activate", (event) => {
             )
         )
     );
+
 });
