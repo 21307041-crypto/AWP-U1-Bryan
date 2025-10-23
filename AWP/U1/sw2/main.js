@@ -1,39 +1,35 @@
-//Registrar el service worker
+//registrar el service worker completo
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register("./sw.js")
-        .then((reg) => {
-            console.log("SW registrado. ", reg);
-        })
-        .catch((err) => { 
-            console.log("Error al registrar el sw", err);
-        });
+    navigator.serviceWorker.register('./sw.js')
+        .then((reg) => console.log('SW registrado', reg))
+        .catch((err) => console.log('Error al registrar el SW', err));
 }
 
-//Boton para verficar el estado del SW
-document.getElementById("check").addEventListener("click", () => {
+//Boton para verificar el estado del SW
+document.getElementById('check').addEventListener('click', () => {
     if (navigator.serviceWorker.controller) {
-        alert("El SW esta activo y controlando la pagina");
+        alert('El SW esta activo');
     } else {
-        alert("El SW aun no esta activo");
+        alert('El SW no esta activo');
     }
 });
 
-//Pedir permiso de notificaciones
-if (Notification.permission === "default") {
+//Pedir permiso de notificacion
+if (Notification.permission === 'default') {
     Notification.requestPermission().then((perm) => {
-        if (perm === "granted") {
-            console.log("Permiso de Notificacion concedido");
+        if (perm === 'granted') {
+            console.log('Permiso de notificación concedido');
         } else {
-            console.log("Permiso de Notificacion denegado");
+            console.log('Permiso de notificación denegado');
         }
     });
 }
 
-// Botón para lanzar notificación local
-document.getElementById("btnNotificacion").addEventListener("click", () => {
+//Boton para lanzar notificacion local
+document.getElementById("btnNotificacion").addEventListener('click', () => {
     if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage("mostrar-notificacion");
+        navigator.serviceWorker.controller.postMessage('mostrar-notificacion');
     } else {
-        console.log("El SW no está activo aún");
+        console.log('El service Worker no esta activo aun');
     }
 });
