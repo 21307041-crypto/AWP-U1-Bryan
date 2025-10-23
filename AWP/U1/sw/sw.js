@@ -1,49 +1,44 @@
-//Nombre del cache actual
-const CACHE_NAME = 'mi-app-cache-v1';
-//listar los archivos que se guardaran en cache
-const urlsToCache = [
-    "./",//ruta de la raiz
-    "./index.html",//documento raiz
-    "./styles.css",//hoja de estilos
-    "./app.js",//Script del cliente
-    "./logo.png"//logotipo
-];
+//Nombre del cache actual (identificador unico)
+const CACHE_NAME = "mi-app-cache-v1";
 
-//evento de instalacion(se dispara cuando se instala el SW)
-self.addEventListener('install', (event) => {
+//Listar los archivos que se guardaran en cache
+const urlsToCache = [
+    "./", //Ruta de la raiz
+    "./index.html", //Documento raiz
+    "./styles.css", //Hoja de estilos
+    "./app.js", //Script del cliente
+    "./logo.png" //Logotipo de canvas
+]; 
+
+//Evento de instalacion (se dispara cuando se instala el sw)
+self.addEventListener("install", (event) => {
     console.log("SW: Instalado");
-    
+
     // Saltar waiting para activarse inmediatamente
     self.skipWaiting();
-    
+
     //event.waitUntil() asegura que la instalacion espere hasta que se complete la promise() de cachear los archivos
     event.waitUntil(
-        //abrir el cache
-        caches.open(CACHE_NAME)
-        .then((cache) => {
+        caches.open(CACHE_NAME).then((cache) => {
             console.log("SW: Archivos cacheados");
-            //cache.addAll() agrega todos los archivos de urlsToCache al cache
+
+            //cache.addAll() agrega todos los archivos de urlsToCache al cache final
             return cache.addAll(urlsToCache);
-        })
-        .then(() => {
-            console.log("SW: Cache configurado correctamente");
-            // La notificación NO funciona aquí porque el SW no está activo aún
         })
     );
 });
 
-//evento de activacion (se dispara cuando el SW toma el control)
-self.addEventListener('activate', (event) => {
-    console.log("SW: Activado");
-    
-    //event.waitUntil() asegura que la activacion espere hasta que se complete la promise()
+//Evento de activacion (se dispara cuando el sw toma el control).
+self.addEventListener("activate", (event) => {
+    console.log("SW: activado");
+
     event.waitUntil(
-        //caches.keys() obtiene todos los nombres de caches almacenados
+        //Caches.keys() obtiene todos los nombres de caches almacenados
         caches.keys().then((cacheNames) => 
             //Promise.all() espera a que se eliminen todos los caches viejos
             Promise.all(
                 cacheNames.map((cache) => {
-                    //si el cache no coincide con el actual, se elimina
+                    //si el cache no coincide con el actual se elimina
                     if (cache !== CACHE_NAME) {
                         console.log("SW: Cache viejo eliminado");
                         return caches.delete(cache);
@@ -51,21 +46,29 @@ self.addEventListener('activate', (event) => {
                 })
             )
         ).then(() => {
-            // Tomar control de todas las pestañas
+            // Tomar control de todas las pestañas inmediatamente
             console.log("SW: Tomando control de las pestañas");
             return self.clients.claim();
         })
     );
 });
 
-//evento de interceptacion de peticiones (cada vez que la app pida un recurso)
+// Evento fetch - Interceptar peticiones (ESENCIAL que falataba)
 self.addEventListener("fetch", (event) => {
+    console.log("SW: Interceptando petición:", event.request.url);
+    
     event.respondWith(
-        //caches.match() busca un recurso en cache
-        caches.match(event.request).then((response) => {
-            //Si esta en cache, se devuelve la copia guardada
-            //Si no esta en cache se hace una peticion normal a la red con fetch()
-            return response || fetch(event.request);
-        })
+        caches.match(event.request)
+            .then((response) => {
+                // Si está en cache, devolverlo
+                if (response) {
+                    console.log("SW: Sirviendo desde cache:", event.request.url);
+                    return response;
+                }
+                
+                // Si no está en cache, hacer fetch normal
+                console.log("SW: Haciendo petición a internet:", event.request.url);
+                return fetch(event.request);
+            })
     );
 });
