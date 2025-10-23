@@ -8,9 +8,14 @@ const urlsToCache = [
     "./app.js",//Script del cliente
     "./logo.png"//logotipo
 ];
+
 //evento de instalacion(se dispara cuando se instala el SW)
 self.addEventListener('install', (event) => {
     console.log("SW: Instalado");
+    
+    // Saltar waiting para activarse inmediatamente
+    self.skipWaiting();
+    
     //event.waitUntil() asegura que la instalacion espere hasta que se complete la promise() de cachear los archivos
     event.waitUntil(
         //abrir el cache
@@ -20,18 +25,17 @@ self.addEventListener('install', (event) => {
             //cache.addAll() agrega todos los archivos de urlsToCache al cache
             return cache.addAll(urlsToCache);
         })
+        .then(() => {
+            console.log("SW: Cache configurado correctamente");
+            // La notificación NO funciona aquí porque el SW no está activo aún
+        })
     );
-
-    //Mostrar notificacion en sistema
-    self.registration.showNotification("Serviver Worker activo", {
-        body: "El cache inicial se configuro correctamente",
-        icon: "./logo.png"
-    });
 });
 
 //evento de activacion (se dispara cuando el SW toma el control)
 self.addEventListener('activate', (event) => {
     console.log("SW: Activado");
+    
     //event.waitUntil() asegura que la activacion espere hasta que se complete la promise()
     event.waitUntil(
         //caches.keys() obtiene todos los nombres de caches almacenados
@@ -46,10 +50,13 @@ self.addEventListener('activate', (event) => {
                     }
                 })
             )
-        )
+        ).then(() => {
+            // Tomar control de todas las pestañas
+            console.log("SW: Tomando control de las pestañas");
+            return self.clients.claim();
+        })
     );
 });
-
 
 //evento de interceptacion de peticiones (cada vez que la app pida un recurso)
 self.addEventListener("fetch", (event) => {
