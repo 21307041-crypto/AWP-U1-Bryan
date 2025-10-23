@@ -14,7 +14,10 @@ const urlsToCache = [
 self.addEventListener("install", (event) => {
     console.log("SW: Instalado");
 
-    //event.waitUntil() asegura que la instalacion esoere hasta que se complete la promise() de cachear los archivos
+    // Saltar waiting para activarse inmediatamente
+    self.skipWaiting();
+
+    //event.waitUntil() asegura que la instalacion espere hasta que se complete la promise() de cachear los archivos
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log("SW: Archivos cacheados");
@@ -32,8 +35,8 @@ self.addEventListener("activate", (event) => {
     event.waitUntil(
         //Caches.keys() obtiene todos los nombres de caches almacenados
         caches.keys().then((cacheNames) => 
-            //Promises.all() espera a que se eliminen todos los caches viejos
-            promise.all(
+            //Promise.all() espera a que se eliminen todos los caches viejos
+            Promise.all(
                 cacheNames.map((cache) => {
                     //si el cache no coincide con el actual se elimina
                     if (cache !== CACHE_NAME) {
@@ -42,7 +45,32 @@ self.addEventListener("activate", (event) => {
                     }
                 })
             )
-        )
+        ).then(() => {
+            // Tomar control de todas las pestañas inmediatamente
+            console.log("SW: Tomando control de las pestañas");
+            return self.clients.claim();
+        })
     );
-
 });
+
+// Evento fetch - Interceptar peticiones
+self.addEventListener("fetch", (event) => {
+    console.log("SW: Interceptando petición:", event.request.url);
+    
+    event.respondWith(
+        caches.match(event.request)
+            .then((response) => {
+                // Si está en cache, devolverlo
+                if (response) {
+                    console.log("SW: Sirviendo desde cache:", event.request.url);
+                    return response;
+                }
+                
+                // Si no está en cache, hacer fetch normal
+                console.log("SW: Haciendo petición a internet:", event.request.url);
+                return fetch(event.request);
+            })
+    );
+});
+
+console.log("SW: Service Worker cargado");
