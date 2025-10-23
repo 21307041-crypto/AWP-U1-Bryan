@@ -8,7 +8,7 @@ if ('serviceWorker' in navigator) {
         .then(reg => console.log("Service Worker registrado", reg))
         //catch se ejecuta si hubo un error en el registro
         //err contiene el mensaje de error o detalles del error
-        .catch((error) => console.log("Error al registrar el SW", err));
+        .catch((error) => console.log("Error al registrar el SW", error));
 }
 //Agregamos un evento click al botón
 document.getElementById("check").addEventListener("click", () => {
