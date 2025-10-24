@@ -4,7 +4,7 @@ const CACHE_NAME = "sw1-v2";
 const URLS_TO_CACHE = [
   "./",
   "./index.html",
-  "./styles.css",
+  "./style.css",
   "./app.js",
   "./logo.png", // solo si existe
 ];
@@ -51,3 +51,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
