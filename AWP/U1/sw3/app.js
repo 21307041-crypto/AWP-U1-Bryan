@@ -1,89 +1,90 @@
-// app.js - Práctica SW3 - Bryan Rocha Moreno - 21307041
-let swRegistration = null;
+// app.js para SW3 - Basado en el video de Service Worker
+let registration = null;
 
-// Función para registrar el Service Worker
-function registerServiceWorker() {
+function registerSW() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-            .then(function(registration) {
-                swRegistration = registration;
-                console.log('Service Worker registrado correctamente');
-                updateStatus('Service Worker activo y funcionando', 'success');
-                
-                // Mostrar botón de prueba
-                document.getElementById('probarCache').style.display = 'inline-block';
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+            .then(reg => {
+                registration = reg;
+                console.log("Service Worker registrado correctamente", reg);
+                updateStatus('Service Worker registrado - Recarga la página para activar');
             })
-            .catch(function(error) {
-                console.log('Error al registrar Service Worker:', error);
-                updateStatus('Error: ' + error.message, 'error');
+            .catch(error => {
+                console.log("Error al registrar el Service Worker", error);
+                updateStatus('Error: ' + error.message);
             });
     } else {
-        console.log('Este navegador no soporta Service Workers');
-        updateStatus('Service Workers no soportados', 'warning');
+        console.log("Service Workers no soportados");
+        updateStatus('Service Workers no soportados en este navegador');
     }
 }
 
-// Función para probar el cache
-function testCache() {
-    console.log('Probando cache...');
+function unregisterSW() {
+    if (!navigator.serviceWorker) return;
     
-    // Intentar cargar algunos recursos para ver si están en cache
-    fetch('./')
-        .then(response => {
-            if (response.status === 200) {
-                console.log('Página principal cargada correctamente');
-                updateStatus('✓ Cache funcionando - Página cargada desde cache', 'success');
-            }
+    navigator.serviceWorker.getRegistrations()
+        .then(registrations => {
+            registrations.forEach(registration => {
+                registration.unregister();
+                console.log("Service Worker desregistrado");
+            });
+            updateStatus('Service Worker desregistrado');
         })
         .catch(error => {
-            console.log('Error al cargar página:', error);
+            console.log("Error al desregistrar", error);
         });
 }
 
-// Función para actualizar el estado en la interfaz
-function updateStatus(message, type) {
+function testCache() {
+    console.log("Probando cache...");
+    fetch('./')
+        .then(res => {
+            console.log('Página cargada:', res.status === 200 ? 'Éxito' : 'Error');
+            updateStatus('Cache funcionando - Página cargada correctamente');
+        })
+        .catch(error => {
+            console.log('Error al cargar página:', error);
+            updateStatus('Error al probar cache');
+        });
+}
+
+function updateStatus(message) {
     const statusElement = document.getElementById('estadoSW');
     if (statusElement) {
         statusElement.textContent = message;
-        
-        // Cambiar color según el tipo
-        statusElement.style.backgroundColor = 
-            type === 'success' ? '#d4edda' : 
-            type === 'error' ? '#f8d7da' : 
-            type === 'warning' ? '#fff3cd' : '#d1ecf1';
-        
-        statusElement.style.color = 
-            type === 'success' ? '#155724' : 
-            type === 'error' ? '#721c24' : 
-            type === 'warning' ? '#856404' : '#0c5460';
     }
 }
 
-// Cuando la página carga, configuramos los botones
+// Configurar eventos cuando carga la página
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Página SW3 cargada');
-    
-    // Botón de activar Service Worker
-    const initButton = document.getElementById('initSW');
-    if (initButton) {
-        initButton.addEventListener('click', function() {
+    // Botón de activar
+    const initBtn = document.getElementById('initSW');
+    if (initBtn) {
+        initBtn.addEventListener('click', function() {
             this.textContent = 'Activando...';
             this.disabled = true;
-            registerServiceWorker();
+            registerSW();
             
-            // Restaurar botón después de 2 segundos
             setTimeout(() => {
                 this.textContent = 'Service Worker Activado';
+                document.getElementById('probarCache').style.display = 'inline-block';
             }, 2000);
         });
     }
     
-    // Botón de probar cache (inicialmente oculto)
-    const testButton = document.getElementById('probarCache');
-    if (testButton) {
-        testButton.addEventListener('click', testCache);
+    // Botón de probar cache
+    const testBtn = document.getElementById('probarCache');
+    if (testBtn) {
+        testBtn.addEventListener('click', testCache);
     }
 });
 
-// Mensaje inicial en consola
-console.log('SW3 - Práctica de Service Worker por Bryan Rocha Moreno');
+// Probar recursos al hacer clic en la página (como en el video)
+window.addEventListener('click', function() {
+    if (!event.target.matches('button')) {
+        console.log('Probando recursos...');
+        testCache();
+    }
+});
+
+console.log('SW3 - Bryan Rocha Moreno - 21307041');
