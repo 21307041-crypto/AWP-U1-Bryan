@@ -1,88 +1,69 @@
-// sw.js - Service Worker básico - Bryan Rocha Moreno - 21307041
+// sw.js para SW3 - Basado en el video de Service Worker
 const CACHE_NAME = 'sw3-cache-v1';
-const FILES_TO_CACHE = [
+const urlsToCache = [
     './',
     './app.js',
     './icono.png'
 ];
 
-// Instalación del Service Worker
-self.addEventListener('install', function(event) {
-    console.log('Instalando Service Worker...');
+self.addEventListener('install', event => {
+    console.log('SW3: Instalado');
+    self.skipWaiting();
     
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(function(cache) {
-                console.log('Guardando archivos en cache');
-                return cache.addAll(FILES_TO_CACHE);
-            })
-            .then(function() {
-                console.log('Archivos guardados en cache');
-                return self.skipWaiting();
-            })
-            .catch(function(error) {
-                console.log('Error al guardar en cache:', error);
-            })
+        .then(cache => {
+            console.log('SW3: Cacheando archivos...');
+            return cache.addAll(urlsToCache);
+        })
+        .then(() => {
+            console.log('SW3: Archivos cacheados correctamente');
+        })
+        .catch(error => {
+            console.log('SW3: Error al cachear archivos:', error);
+        })
     );
 });
 
-// Activación del Service Worker
-self.addEventListener('activate', function(event) {
-    console.log('Service Worker activado');
+self.addEventListener('activate', event => {
+    console.log('SW3: Activado');
     
     event.waitUntil(
-        caches.keys().then(function(cacheNames) {
+        caches.keys()
+        .then(cacheNames => {
             return Promise.all(
-                cacheNames.map(function(cacheName) {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('Eliminando cache viejo:', cacheName);
-                        return caches.delete(cacheName);
+                cacheNames.map(cache => {
+                    if (cache !== CACHE_NAME) {
+                        console.log('SW3: Eliminando cache viejo:', cache);
+                        return caches.delete(cache);
                     }
                 })
             );
-        }).then(function() {
+        })
+        .then(() => {
             return self.clients.claim();
         })
     );
 });
 
-// Interceptar peticiones
-self.addEventListener('fetch', function(event) {
+self.addEventListener('fetch', event => {
+    console.log('SW3: Interceptando:', event.request.url);
+    
     event.respondWith(
         caches.match(event.request)
-            .then(function(response) {
-                // Si está en cache, devolverlo
-                if (response) {
-                    console.log('Sirviendo desde cache:', event.request.url);
-                    return response;
-                }
-                
-                // Si no está en cache, hacer la petición normal
-                console.log('Haciendo petición a internet:', event.request.url);
-                return fetch(event.request)
-                    .then(function(networkResponse) {
-                        // Si la respuesta es válida, guardarla en cache
-                        if (networkResponse && networkResponse.status === 200) {
-                            var responseToCache = networkResponse.clone();
-                            caches.open(CACHE_NAME)
-                                .then(function(cache) {
-                                    cache.put(event.request, responseToCache);
-                                    console.log('Guardado en cache:', event.request.url);
-                                });
-                        }
-                        return networkResponse;
-                    })
-                    .catch(function(error) {
-                        console.log('Error en la petición:', error);
-                        // Si es una página y hay error, mostrar la página offline
-                        if (event.request.destination === 'document') {
-                            return caches.match('./');
-                        }
-                        return new Response('No hay conexión a internet');
-                    });
-            })
+        .then(response => {
+            if (response) {
+                console.log('SW3: Sirviendo desde cache:', event.request.url);
+                return response;
+            }
+            
+            console.log('SW3: Haciendo fetch a internet:', event.request.url);
+            return fetch(event.request);
+        })
+        .catch(error => {
+            console.log('SW3: Error en fetch:', error);
+        })
     );
 });
 
-console.log('Service Worker cargado');
-
+console.log('SW3: Service Worker cargado - Bryan Rocha Moreno');
