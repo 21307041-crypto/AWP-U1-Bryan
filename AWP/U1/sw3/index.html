@@ -1,118 +1,193 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SW3 - Cache Básico</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        
-        .student-info {
-            background: #3498db;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            display: inline-block;
-            font-size: 14px;
-        }
-        
-        .content {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        button {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 10px 5px;
-        }
-        
-        button:hover {
-            background: #2980b9;
-        }
-        
-        .status {
-            margin: 20px 0;
-            padding: 15px;
-            border-radius: 5px;
-            background: #ecf0f1;
-            border-left: 4px solid #3498db;
-        }
-        
-        .back-link {
-            color: #3498db;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 20px;
-        }
-        
-        .back-link:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SW3 - Práctica de Caché</title>
+  <style>
+    :root {
+      --azul: #0078ff;
+      --azul-oscuro: #0056b3;
+      --fondo: #0e1117;
+      --tarjeta: #161b22;
+      --texto: #e6edf3;
+      --gris: #8b949e;
+      --verde: #2ea043;
+      --borde: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--fondo);
+      color: var(--texto);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      color: var(--azul);
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--gris);
+      font-size: 1rem;
+    }
+
+    .student-info {
+      margin-top: 15px;
+      background: var(--azul);
+      color: white;
+      display: inline-block;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .card {
+      background: var(--tarjeta);
+      border: 1px solid var(--borde);
+      border-radius: 12px;
+      padding: 25px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      margin-bottom: 25px;
+    }
+
+    .card h2 {
+      color: var(--azul);
+      margin-bottom: 10px;
+      font-size: 1.4rem;
+    }
+
+    .card h3 {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      color: var(--texto);
+      border-left: 3px solid var(--azul);
+      padding-left: 8px;
+    }
+
+    .card p, .card ul {
+      color: var(--gris);
+      line-height: 1.6;
+    }
+
+    ul {
+      list-style: disc;
+      margin-left: 25px;
+      margin-top: 10px;
+    }
+
+    button {
+      background: var(--azul);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 10px 6px 0 0;
+      transition: background 0.2s ease-in-out, transform 0.1s;
+    }
+
+    button:hover {
+      background: var(--azul-oscuro);
+      transform: translateY(-1px);
+    }
+
+    .status {
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 4px solid var(--azul);
+      border-radius: 6px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+
+    .status.success {
+      border-left-color: var(--verde);
+    }
+
+    .status.error {
+      border-left-color: #d32f2f;
+    }
+
+    a.back-link {
+      color: var(--azul);
+      text-decoration: none;
+      font-weight: 500;
+      margin-top: 20px;
+      transition: color 0.2s;
+    }
+
+    a.back-link:hover {
+      color: var(--azul-oscuro);
+      text-decoration: underline;
+    }
+
+    footer {
+      margin-top: auto;
+      font-size: 0.8rem;
+      color: var(--gris);
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <h1>SW3 - Práctica de Cache</h1>
-        <p>Service Worker para almacenamiento offline</p>
-        <div class="student-info">
-            Bryan Rocha Moreno - 21307041
-        </div>
+
+  <div class="header">
+    <h1>SW3 - Práctica de Caché</h1>
+    <p>Service Worker para almacenamiento offline</p>
+    <div class="student-info">Bryan Rocha Moreno - 21307041</div>
+  </div>
+
+  <div class="card">
+    <h2>¿Qué hace este Service Worker?</h2>
+    <p>Este Service Worker almacena los recursos esenciales de la aplicación para garantizar que siga funcionando sin conexión a internet.</p>
+
+    <h3>Archivos almacenados:</h3>
+    <ul>
+      <li>index.html</li>
+      <li>app.js</li>
+      <li>sw.js</li>
+      <li>icono de la página</li>
+    </ul>
+
+    <div class="actions">
+      <button id="initSW">Activar Service Worker</button>
+      <button id="probarCache" style="display:none;">Probar Caché</button>
     </div>
 
-    <div class="content">
-        <h2>¿Qué hace este Service Worker?</h2>
-        <p>Este Service Worker guarda en cache los archivos de esta página para que funcione sin conexión a internet.</p>
-        
-        <h3>Archivos que se almacenan:</h3>
-        <ul>
-            <li>Esta página (index.html)</li>
-            <li>El archivo JavaScript (app.js)</li>
-            <li>El Service Worker (sw.js)</li>
-            <li>El icono de la página</li>
-        </ul>
-        
-        <div class="actions">
-            <button id="initSW">Activar Service Worker</button>
-            <button id="probarCache" style="display:none;">Probar Cache</button>
-        </div>
-
-        <div class="status" id="status">
-            <div id="estadoSW">Presiona el botón para activar el Service Worker</div>
-        </div>
+    <div class="status" id="status">
+      <div id="estadoSW">Presiona el botón para activar el Service Worker.</div>
     </div>
+  </div>
 
-    <a href="../index.html" class="back-link">← Volver al inicio</a>
+  <a href="../index.html" class="back-link">← Volver al inicio</a>
 
-    <script src="./app.js"></script>
+  <footer>
+    © 2025 | Aplicaciones Web Progresivas - Unidad 1
+  </footer>
+
+  <script src="./app.js"></script>
 </body>
 </html>
-
